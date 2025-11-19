@@ -1,5 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { studiesAPI } from '../services/api'
+import Loading from '../components/Loading'
+import StatCard from '../components/StatCard'
+import {
+  DocumentTextIcon,
+  InboxArrowDownIcon,
+  CogIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PaperAirplaneIcon,
+  HeartIcon,
+  ExclamationTriangleIcon,
+  ShieldExclamationIcon,
+  BoltIcon
+} from '@heroicons/react/24/outline'
 
 export default function Dashboard() {
   const { data: stats, isLoading } = useQuery({
@@ -9,56 +23,181 @@ export default function Dashboard() {
   })
 
   if (isLoading) {
-    return <div className="text-center py-12">Loading...</div>
+    return <Loading />
   }
 
   const statusCards = [
-    { name: 'Total Studies', value: stats?.total_studies || 0, color: 'blue' },
-    { name: 'Received', value: stats?.received || 0, color: 'indigo' },
-    { name: 'Processing', value: stats?.processing || 0, color: 'purple' },
-    { name: 'Completed', value: stats?.completed || 0, color: 'green' },
-    { name: 'Failed', value: stats?.failed || 0, color: 'red' },
-    { name: 'Sent', value: stats?.sent || 0, color: 'gray' },
+    {
+      label: 'Total Studies',
+      value: stats?.total_studies || 0,
+      color: 'blue',
+      icon: DocumentTextIcon
+    },
+    {
+      label: 'Received',
+      value: stats?.received || 0,
+      color: 'indigo',
+      icon: InboxArrowDownIcon
+    },
+    {
+      label: 'Processing',
+      value: stats?.processing || 0,
+      color: 'purple',
+      icon: CogIcon
+    },
+    {
+      label: 'Completed',
+      value: stats?.completed || 0,
+      color: 'green',
+      icon: CheckCircleIcon
+    },
+    {
+      label: 'Failed',
+      value: stats?.failed || 0,
+      color: 'red',
+      icon: XCircleIcon
+    },
+    {
+      label: 'Sent',
+      value: stats?.sent || 0,
+      color: 'gray',
+      icon: PaperAirplaneIcon
+    },
   ]
 
   const classificationCards = [
-    { name: 'Normal', value: stats?.normal || 0, color: 'green' },
-    { name: 'Abnormal', value: stats?.abnormal || 0, color: 'yellow' },
-    { name: 'Critical', value: stats?.critical || 0, color: 'orange' },
-    { name: 'Emergency', value: stats?.emergency || 0, color: 'red' },
+    {
+      label: 'Normal',
+      value: stats?.normal || 0,
+      color: 'green',
+      icon: HeartIcon
+    },
+    {
+      label: 'Abnormal',
+      value: stats?.abnormal || 0,
+      color: 'yellow',
+      icon: ExclamationTriangleIcon
+    },
+    {
+      label: 'Critical',
+      value: stats?.critical || 0,
+      color: 'red',
+      icon: ShieldExclamationIcon
+    },
+    {
+      label: 'Emergency',
+      value: stats?.emergency || 0,
+      color: 'red',
+      icon: BoltIcon
+    },
   ]
 
+  // Calculate completion rate
+  const totalProcessed = (stats?.completed || 0) + (stats?.failed || 0)
+  const completionRate = totalProcessed > 0
+    ? ((stats?.completed || 0) / totalProcessed * 100).toFixed(1)
+    : 0
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="border-b border-gray-200 pb-5">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Real-time overview of your chest X-ray analysis system
+        </p>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="card bg-gradient-to-br from-primary-50 to-white">
+          <div>
+            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Success Rate
+            </p>
+            <p className="mt-2 text-4xl font-bold text-primary-600">
+              {completionRate}%
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              {stats?.completed || 0} of {totalProcessed} processed successfully
+            </p>
+          </div>
+        </div>
+
+        <div className="card bg-gradient-to-br from-green-50 to-white">
+          <div>
+            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Normal Cases
+            </p>
+            <p className="mt-2 text-4xl font-bold text-green-600">
+              {stats?.normal || 0}
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              No significant abnormalities
+            </p>
+          </div>
+        </div>
+
+        <div className="card bg-gradient-to-br from-red-50 to-white">
+          <div>
+            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Urgent Cases
+            </p>
+            <p className="mt-2 text-4xl font-bold text-red-600">
+              {(stats?.critical || 0) + (stats?.emergency || 0)}
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Requiring immediate attention
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Processing Status */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Processing Status</h2>
+      <div>
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Processing Status</h2>
+          <p className="text-sm text-gray-600">Current system processing statistics</p>
+        </div>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {statusCards.map((card) => (
-            <div key={card.name} className="card">
-              <dt className="text-sm font-medium text-gray-500 truncate">{card.name}</dt>
-              <dd className={`mt-1 text-3xl font-semibold text-${card.color}-600`}>
-                {card.value}
-              </dd>
-            </div>
+            <StatCard key={card.label} {...card} />
           ))}
         </div>
       </div>
 
       {/* Classification Results */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Classification Results</h2>
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Classification Results</h2>
+          <p className="text-sm text-gray-600">AI-powered diagnostic classifications</p>
+        </div>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {classificationCards.map((card) => (
-            <div key={card.name} className="card">
-              <dt className="text-sm font-medium text-gray-500 truncate">{card.name}</dt>
-              <dd className={`mt-1 text-3xl font-semibold text-${card.color}-600`}>
-                {card.value}
-              </dd>
-            </div>
+            <StatCard key={card.label} {...card} />
           ))}
+        </div>
+      </div>
+
+      {/* Quick Stats Bar */}
+      <div className="card bg-gray-50">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-900">{stats?.total_studies || 0}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Total</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-purple-600">{stats?.processing || 0}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Active</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-green-600">{stats?.completed || 0}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Done</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-red-600">{stats?.failed || 0}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Failed</p>
+          </div>
         </div>
       </div>
     </div>
