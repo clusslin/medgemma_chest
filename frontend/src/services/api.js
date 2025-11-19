@@ -45,6 +45,7 @@ export const dicomNodesAPI = {
   create: (data) => api.post('/dicom-nodes', data),
   update: (id, data) => api.put(`/dicom-nodes/${id}`, data),
   delete: (id) => api.delete(`/dicom-nodes/${id}`),
+  testConnection: (id) => api.post(`/dicom-nodes/${id}/test`),
 }
 
 // Studies API

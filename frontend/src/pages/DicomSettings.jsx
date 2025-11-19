@@ -2,13 +2,23 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dicomNodesAPI } from '../services/api'
 import { useToast } from '../contexts/ToastContext'
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  SignalIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+  ServerIcon
+} from '@heroicons/react/24/outline'
 
 export default function DicomSettings() {
   const queryClient = useQueryClient()
   const toast = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNode, setEditingNode] = useState(null)
+  const [testingNodeId, setTestingNodeId] = useState(null)
   const [formData, setFormData] = useState({
     ae_title: '',
     ip_address: '',
@@ -60,6 +70,18 @@ export default function DicomSettings() {
     },
   })
 
+  const testConnectionMutation = useMutation({
+    mutationFn: dicomNodesAPI.testConnection,
+    onSuccess: () => {
+      setTestingNodeId(null)
+      toast.success('Connection test successful')
+    },
+    onError: (error) => {
+      setTestingNodeId(null)
+      toast.error(`Connection test failed: ${error.response?.data?.detail || error.message}`)
+    },
+  })
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const data = {
@@ -93,6 +115,11 @@ export default function DicomSettings() {
     }
   }
 
+  const handleTestConnection = (id) => {
+    setTestingNodeId(id)
+    testConnectionMutation.mutate(id)
+  }
+
   const resetForm = () => {
     setEditingNode(null)
     setFormData({
@@ -119,94 +146,132 @@ export default function DicomSettings() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">DICOM Settings</h1>
-        <button
-          onClick={() => {
-            resetForm()
-            setIsModalOpen(true)
-          }}
-          className="btn btn-primary flex items-center"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Add Node
-        </button>
-      </div>
-
-      <div className="card">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  AE Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  IP Address
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Port
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {nodes.map((node) => (
-                <tr key={node.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {node.ae_title}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {node.ip_address}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {node.port}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`badge ${getNodeTypeBadge(node.node_type)}`}>
-                      {node.node_type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`badge ${node.is_active ? 'badge-completed' : 'badge-failed'}`}>
-                      {node.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => handleEdit(node)}
-                      className="text-primary-600 hover:text-primary-900 mr-3"
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(node.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="border-b border-gray-200 dark:border-gray-700 pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">DICOM Settings</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Manage DICOM nodes for receiving and sending medical images
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <button
+              onClick={() => {
+                resetForm()
+                setIsModalOpen(true)
+              }}
+              className="btn btn-primary flex items-center"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add DICOM Node
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* DICOM Nodes Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {nodes.map((node) => (
+          <div key={node.id} className="card hover:shadow-xl transition-all duration-200">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {node.ae_title}
+                  </h3>
+                  <span className={`badge ${getNodeTypeBadge(node.node_type)}`}>
+                    {node.node_type}
+                  </span>
+                  <span className={`badge ${node.is_active ? 'badge-completed' : 'badge-failed'}`}>
+                    {node.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                {node.description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{node.description}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">IP Address</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{node.ip_address}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Port</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{node.port}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => handleTestConnection(node.id)}
+                disabled={testingNodeId === node.id}
+                className="btn btn-sm btn-secondary flex items-center space-x-2"
+              >
+                {testingNodeId === node.id ? (
+                  <>
+                    <div className="spinner text-primary-600"></div>
+                    <span>Testing...</span>
+                  </>
+                ) : (
+                  <>
+                    <SignalIcon className="h-4 w-4" />
+                    <span>Test Connection</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleEdit(node)}
+                  className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
+                  title="Edit node"
+                >
+                  <PencilIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(node.id)}
+                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                  title="Delete node"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {nodes.length === 0 && (
+        <div className="card text-center py-12">
+          <ServerIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No DICOM nodes</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Get started by adding your first DICOM node.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => {
+                resetForm()
+                setIsModalOpen(true)
+              }}
+              className="btn btn-primary inline-flex items-center"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add DICOM Node
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-lg font-semibold mb-4">
+        <div className="modal-overlay">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 animate-slideUp">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
               {editingNode ? 'Edit DICOM Node' : 'Add DICOM Node'}
             </h2>
 
