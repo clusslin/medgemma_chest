@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: medgemma_postgres
+    environment:
+      POSTGRES_DB: medgemma_chest
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - medgemma_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ Message Queue
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: medgemma_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    networks:
+      - medgemma_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: medgemma_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - medgemma_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: medgemma_backend
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    ports:
+      - "8000:8000"
+    networks:
+      - medgemma_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # DICOM SCP Service
+  dicom_scp:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: medgemma_dicom_scp
+    command: python -m backend.services.dicom_scp
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "11112:11112"
+    networks:
+      - medgemma_network
+    depends_on:
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+
+  # Processing Worker (DICOM)
+  worker_dicom:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: medgemma_worker_dicom
+    command: python -m backend.services.processing_worker
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    networks:
+      - medgemma_network
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Processing Worker (Report)
+  worker_report:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: medgemma_worker_report
+    command: python -m backend.services.processing_worker report
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    networks:
+      - medgemma_network
+    depends_on:
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: medgemma_frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - medgemma_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: medgemma_nginx
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    networks:
+      - medgemma_network
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
+
+networks:
+  medgemma_network:
+    driver: bridge
