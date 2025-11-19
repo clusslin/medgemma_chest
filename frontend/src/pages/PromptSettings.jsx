@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { promptsAPI } from '../services/api'
+import { useToast } from '../contexts/ToastContext'
 import { PlusIcon, PencilIcon, TrashIcon, StarIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 
 export default function PromptSettings() {
   const queryClient = useQueryClient()
+  const toast = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPrompt, setEditingPrompt] = useState(null)
   const [formData, setFormData] = useState({
@@ -29,6 +31,10 @@ export default function PromptSettings() {
       queryClient.invalidateQueries(['prompts'])
       setIsModalOpen(false)
       resetForm()
+      toast.success('Prompt template created successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to create prompt template: ${error.message}`)
     },
   })
 
@@ -38,6 +44,10 @@ export default function PromptSettings() {
       queryClient.invalidateQueries(['prompts'])
       setIsModalOpen(false)
       resetForm()
+      toast.success('Prompt template updated successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to update prompt template: ${error.message}`)
     },
   })
 
@@ -45,6 +55,10 @@ export default function PromptSettings() {
     mutationFn: promptsAPI.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['prompts'])
+      toast.success('Prompt template deleted successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete prompt template: ${error.message}`)
     },
   })
 
@@ -52,6 +66,10 @@ export default function PromptSettings() {
     mutationFn: promptsAPI.setDefault,
     onSuccess: () => {
       queryClient.invalidateQueries(['prompts'])
+      toast.success('Default prompt template updated')
+    },
+    onError: (error) => {
+      toast.error(`Failed to set default prompt template: ${error.message}`)
     },
   })
 

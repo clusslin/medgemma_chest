@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dicomNodesAPI } from '../services/api'
+import { useToast } from '../contexts/ToastContext'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 
 export default function DicomSettings() {
   const queryClient = useQueryClient()
+  const toast = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNode, setEditingNode] = useState(null)
   const [formData, setFormData] = useState({
@@ -27,6 +29,10 @@ export default function DicomSettings() {
       queryClient.invalidateQueries(['dicom-nodes'])
       setIsModalOpen(false)
       resetForm()
+      toast.success('DICOM node created successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to create DICOM node: ${error.message}`)
     },
   })
 
@@ -36,6 +42,10 @@ export default function DicomSettings() {
       queryClient.invalidateQueries(['dicom-nodes'])
       setIsModalOpen(false)
       resetForm()
+      toast.success('DICOM node updated successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to update DICOM node: ${error.message}`)
     },
   })
 
@@ -43,6 +53,10 @@ export default function DicomSettings() {
     mutationFn: dicomNodesAPI.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['dicom-nodes'])
+      toast.success('DICOM node deleted successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete DICOM node: ${error.message}`)
     },
   })
 
