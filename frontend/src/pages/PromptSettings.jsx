@@ -139,33 +139,44 @@ export default function PromptSettings() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Prompt Settings</h1>
-        <button
-          onClick={() => {
-            resetForm()
-            setIsModalOpen(true)
-          }}
-          className="btn btn-primary flex items-center"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Add Prompt
-        </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="border-b border-gray-200 dark:border-gray-700 pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Prompt Settings</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Manage AI prompt templates for medical image analysis
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <button
+              onClick={() => {
+                resetForm()
+                setIsModalOpen(true)
+              }}
+              className="btn btn-primary flex items-center"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Prompt Template
+            </button>
+          </div>
+        </div>
       </div>
 
+      {/* Prompts List */}
       <div className="space-y-4">
         {prompts.map((prompt) => (
-          <div key={prompt.id} className="card">
+          <div key={prompt.id} className="card hover:shadow-xl transition-all duration-200">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{prompt.name}</h3>
+                <div className="flex items-center flex-wrap gap-2 mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{prompt.name}</h3>
                   <span className={`badge ${getTypeBadge(prompt.template_type)}`}>
                     {prompt.template_type}
                   </span>
                   {prompt.is_default && (
-                    <span className="flex items-center text-yellow-600 text-sm">
+                    <span className="flex items-center text-yellow-600 dark:text-yellow-500 text-sm font-medium">
                       <StarIconSolid className="h-4 w-4 mr-1" />
                       Default
                     </span>
@@ -176,19 +187,29 @@ export default function PromptSettings() {
                 </div>
 
                 {prompt.description && (
-                  <p className="text-sm text-gray-600 mb-3">{prompt.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{prompt.description}</p>
                 )}
 
-                <div className="bg-gray-50 p-4 rounded text-sm font-mono text-gray-700 max-h-32 overflow-y-auto">
-                  {prompt.prompt_text}
+                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      Prompt Template
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {prompt.prompt_text.length} characters
+                    </span>
+                  </div>
+                  <div className="text-sm font-mono text-gray-700 dark:text-gray-300 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                    {prompt.prompt_text}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 ml-4">
+              <div className="flex flex-col items-center space-y-2 ml-4">
                 {!prompt.is_default && (
                   <button
                     onClick={() => handleSetDefault(prompt.id)}
-                    className="text-yellow-600 hover:text-yellow-900"
+                    className="p-2 text-yellow-600 dark:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 rounded-lg transition-colors"
                     title="Set as default"
                   >
                     <StarIcon className="h-5 w-5" />
@@ -196,13 +217,15 @@ export default function PromptSettings() {
                 )}
                 <button
                   onClick={() => handleEdit(prompt)}
-                  className="text-primary-600 hover:text-primary-900"
+                  className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
+                  title="Edit prompt"
                 >
                   <PencilIcon className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(prompt.id)}
-                  className="text-red-600 hover:text-red-900"
+                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                  title="Delete prompt"
                 >
                   <TrashIcon className="h-5 w-5" />
                 </button>
@@ -212,11 +235,33 @@ export default function PromptSettings() {
         ))}
       </div>
 
+      {prompts.length === 0 && (
+        <div className="card text-center py-12">
+          <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No prompt templates</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Get started by creating your first AI prompt template.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => {
+                resetForm()
+                setIsModalOpen(true)
+              }}
+              className="btn btn-primary inline-flex items-center"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Prompt Template
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-4">
+        <div className="modal-overlay">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto animate-slideUp">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
               {editingPrompt ? 'Edit Prompt Template' : 'Add Prompt Template'}
             </h2>
 
@@ -264,18 +309,24 @@ export default function PromptSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Prompt Text
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="label">
+                      Prompt Text
+                    </label>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {formData.prompt_text.length} characters
+                    </span>
+                  </div>
                   <textarea
                     className="input font-mono text-sm"
                     rows="10"
                     value={formData.prompt_text}
                     onChange={(e) => setFormData({ ...formData, prompt_text: e.target.value })}
                     required
+                    placeholder="Enter your prompt template here..."
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Use variables like {'{patient_age}'}, {'{patient_sex}'}, {'{study_description}'}
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
+                    <span className="font-medium">Available variables:</span> {'{patient_age}'}, {'{patient_sex}'}, {'{study_description}'}, {'{patient_name}'}, {'{patient_id}'}
                   </p>
                 </div>
 
