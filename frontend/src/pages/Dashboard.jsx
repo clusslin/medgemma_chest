@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { studiesAPI } from '../services/api'
 import Loading from '../components/Loading'
 import StatCard from '../components/StatCard'
+import DonutChart from '../components/DonutChart'
+import ProgressBar from '../components/ProgressBar'
 import {
   DocumentTextIcon,
   InboxArrowDownIcon,
@@ -12,7 +14,8 @@ import {
   HeartIcon,
   ExclamationTriangleIcon,
   ShieldExclamationIcon,
-  BoltIcon
+  BoltIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
 
 export default function Dashboard() {
@@ -98,105 +101,190 @@ export default function Dashboard() {
     ? ((stats?.completed || 0) / totalProcessed * 100).toFixed(1)
     : 0
 
+  // Prepare chart data
+  const classificationData = [
+    { label: 'Normal', value: stats?.normal || 0, color: 'bg-green-500' },
+    { label: 'Abnormal', value: stats?.abnormal || 0, color: 'bg-yellow-500' },
+    { label: 'Critical', value: stats?.critical || 0, color: 'bg-orange-500' },
+    { label: 'Emergency', value: stats?.emergency || 0, color: 'bg-red-500' }
+  ]
+
+  const statusData = [
+    { label: 'Received', value: stats?.received || 0, color: 'bg-indigo-500' },
+    { label: 'Processing', value: stats?.processing || 0, color: 'bg-purple-500' },
+    { label: 'Completed', value: stats?.completed || 0, color: 'bg-green-500' },
+    { label: 'Failed', value: stats?.failed || 0, color: 'bg-red-500' },
+    { label: 'Sent', value: stats?.sent || 0, color: 'bg-gray-500' }
+  ]
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="border-b border-gray-200 pb-5">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Real-time overview of your chest X-ray analysis system
-        </p>
+      <div className="border-b border-gray-200 dark:border-gray-700 pb-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Real-time overview of your chest X-ray analysis system
+            </p>
+          </div>
+          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+            <ClockIcon className="h-4 w-4 mr-1" />
+            Auto-refreshing every 5 seconds
+          </div>
+        </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="card bg-gradient-to-br from-primary-50 to-white">
+        <div className="card bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-800">
           <div>
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               Success Rate
             </p>
-            <p className="mt-2 text-4xl font-bold text-primary-600">
+            <p className="mt-2 text-4xl font-bold text-primary-600 dark:text-primary-400">
               {completionRate}%
             </p>
-            <p className="mt-2 text-sm text-gray-500">
+            <div className="mt-3">
+              <ProgressBar value={parseFloat(completionRate)} max={100} color="primary" />
+            </div>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               {stats?.completed || 0} of {totalProcessed} processed successfully
             </p>
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-green-50 to-white">
+        <div className="card bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-800">
           <div>
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               Normal Cases
             </p>
-            <p className="mt-2 text-4xl font-bold text-green-600">
+            <p className="mt-2 text-4xl font-bold text-green-600 dark:text-green-400">
               {stats?.normal || 0}
             </p>
-            <p className="mt-2 text-sm text-gray-500">
-              No significant abnormalities
+            <div className="mt-3">
+              <ProgressBar
+                value={stats?.normal || 0}
+                max={stats?.total_studies || 1}
+                color="green"
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              No significant abnormalities detected
             </p>
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-red-50 to-white">
+        <div className="card bg-gradient-to-br from-red-50 to-white dark:from-red-900/20 dark:to-gray-800">
           <div>
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               Urgent Cases
             </p>
-            <p className="mt-2 text-4xl font-bold text-red-600">
+            <p className="mt-2 text-4xl font-bold text-red-600 dark:text-red-400">
               {(stats?.critical || 0) + (stats?.emergency || 0)}
             </p>
-            <p className="mt-2 text-sm text-gray-500">
+            <div className="mt-3">
+              <ProgressBar
+                value={(stats?.critical || 0) + (stats?.emergency || 0)}
+                max={stats?.total_studies || 1}
+                color="red"
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Requiring immediate attention
             </p>
           </div>
         </div>
       </div>
 
-      {/* Processing Status */}
-      <div>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Processing Status</h2>
-          <p className="text-sm text-gray-600">Current system processing statistics</p>
+      {/* Processing Status with Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Processing Status</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Current system processing statistics</p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {statusCards.map((card) => (
+              <StatCard key={card.label} {...card} />
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {statusCards.map((card) => (
-            <StatCard key={card.label} {...card} />
-          ))}
+
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Status Distribution
+          </h3>
+          <div className="flex justify-center">
+            <DonutChart data={statusData} size={180} thickness={25} />
+          </div>
+          <div className="mt-4 space-y-2">
+            {statusData.map((item) => (
+              <div key={item.label} className="flex items-center justify-between text-sm">
+                <div className="flex items-center">
+                  <div className={`w-3 h-3 rounded-full ${item.color} mr-2`}></div>
+                  <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
+                </div>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{item.value}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Classification Results */}
-      <div>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Classification Results</h2>
-          <p className="text-sm text-gray-600">AI-powered diagnostic classifications</p>
+      {/* Classification Results with Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Classification Results</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered diagnostic classifications</p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {classificationCards.map((card) => (
+              <StatCard key={card.label} {...card} />
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {classificationCards.map((card) => (
-            <StatCard key={card.label} {...card} />
-          ))}
+
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Classification Distribution
+          </h3>
+          <div className="flex justify-center">
+            <DonutChart data={classificationData} size={180} thickness={25} />
+          </div>
+          <div className="mt-4 space-y-2">
+            {classificationData.map((item) => (
+              <div key={item.label} className="flex items-center justify-between text-sm">
+                <div className="flex items-center">
+                  <div className={`w-3 h-3 rounded-full ${item.color} mr-2`}></div>
+                  <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
+                </div>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{item.value}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Quick Stats Bar */}
-      <div className="card bg-gray-50">
+      <div className="card bg-gray-50 dark:bg-gray-900/50">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900">{stats?.total_studies || 0}</p>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Total</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats?.total_studies || 0}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Total</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600">{stats?.processing || 0}</p>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Active</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats?.processing || 0}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Active</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{stats?.completed || 0}</p>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Done</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats?.completed || 0}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Done</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-red-600">{stats?.failed || 0}</p>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Failed</p>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats?.failed || 0}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Failed</p>
           </div>
         </div>
       </div>
