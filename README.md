@@ -44,9 +44,9 @@ An automated DICOM chest X-ray analysis system powered by Google's MedGemma 27B 
 ## System Architecture
 
 ```
-┌─────────────┐
+┌──────────────┐
 │ PACS/Modality│
-└──────┬──────┘
+└──────┬───────┘
        │ DICOM
        ▼
 ┌─────────────────┐
