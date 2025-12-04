@@ -75,25 +75,39 @@ An automated DICOM chest X-ray analysis system powered by Google's MedGemma 27B 
 ### Hardware Requirements
 
 - **CPU**: 8+ cores recommended
-- **RAM**: 32GB+ recommended (for MedGemma 27B model)
-- **GPU**: NVIDIA GPU with 16GB+ VRAM (for optimal performance)
-  - CUDA 12.1+ support
-  - Compute Capability 7.0+
-- **Storage**: 100GB+ for model and data storage
+- **RAM**: 32GB+ recommended (64GB optimal for MedGemma 27B model)
+- **GPU** (optional but recommended for AI inference):
+  - **RTX 20 Series**: RTX 2060, RTX 2070, RTX 2080, RTX 2080 Ti
+  - **RTX 30 Series**: RTX 3060, RTX 3070, RTX 3080, RTX 3090
+  - **RTX 40 Series**: RTX 4060, RTX 4070, RTX 4080, RTX 4090
+  - **RTX 50 Series**: All models
+  - **Professional GPUs**: RTX 4000, RTX 6000, RTX A4000, RTX A6000
+  - **Datacenter GPUs**: A4000, A6000
+  - Minimum 8GB VRAM (16GB+ recommended)
+  - CUDA Compute Capability 7.5+
+- **Storage**: 500GB+ for model, DICOM images, and data storage
 
 ### Software Requirements
 
-- Docker 24.0+
-- Docker Compose 2.20+
-- NVIDIA Container Toolkit (for GPU support)
-- Linux OS (Ubuntu 22.04+ recommended)
+- **Docker**: 24.0+
+- **Docker Compose**: 2.20+
+- **NVIDIA Container Toolkit** (for GPU support)
+- **Operating System**:
+  - Ubuntu 20.04/22.04/24.04 LTS (recommended)
+  - Windows 10 Pro/Enterprise or Windows 11 with WSL 2
 
 ## Installation
+
+**📖 Detailed Platform-Specific Guides:**
+- **Ubuntu Users**: See [DEPLOYMENT_UBUNTU.md](DEPLOYMENT_UBUNTU.md) for comprehensive Ubuntu deployment guide
+- **Windows Users**: See [DEPLOYMENT_WINDOWS.md](DEPLOYMENT_WINDOWS.md) for comprehensive Windows deployment guide
+
+### Quick Start
 
 ### 1. Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/clusslin/medgemma_chest.git
 cd medgemma_chest
 ```
 

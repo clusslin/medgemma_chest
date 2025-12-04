@@ -139,8 +139,8 @@ services:
   # Frontend
   frontend:
     build:
-      context: ./frontend
-    dockerfile: ../docker/Dockerfile.frontend
+      context: .
+      dockerfile: docker/Dockerfile.frontend
     container_name: medgemma_frontend
     ports:
       - "3000:3000"
