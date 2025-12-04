@@ -74,12 +74,9 @@ services:
     networks:
       - medgemma_network
     depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - rabbitmq
+      - redis
     restart: unless-stopped
 
   # DICOM SCP Service
@@ -119,13 +116,9 @@ services:
     depends_on:
       - postgres
       - rabbitmq
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
     restart: unless-stopped
 
   # Processing Worker (Report)
