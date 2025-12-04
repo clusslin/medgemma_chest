@@ -116,14 +116,6 @@ services:
     depends_on:
       - postgres
       - rabbitmq
-    # GPU deploy block temporarily disabled for compose v3.8 compatibility
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
     restart: unless-stopped
 
   # Processing Worker (Report)
@@ -165,7 +157,7 @@ services:
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "80:80"
+      - "8081:80"
     networks:
       - medgemma_network
     depends_on:
