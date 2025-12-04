@@ -74,12 +74,9 @@ services:
     networks:
       - medgemma_network
     depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - rabbitmq
+      - redis
     restart: unless-stopped
 
   # DICOM SCP Service
@@ -119,13 +116,14 @@ services:
     depends_on:
       - postgres
       - rabbitmq
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # GPU deploy block temporarily disabled for compose v3.8 compatibility
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
     restart: unless-stopped
 
   # Processing Worker (Report)
@@ -150,7 +148,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: ../docker/Dockerfile.frontend
+    dockerfile: ../docker/Dockerfile.frontend
     container_name: medgemma_frontend
     ports:
       - "3000:3000"
