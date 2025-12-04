@@ -409,10 +409,6 @@ Interactive API documentation available at:
 5. **Update dependencies** regularly
 6. **Monitor logs** for suspicious activity
 
-## License
-
-[Specify your license]
-
 ## Support
 
 For issues and questions:
