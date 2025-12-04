@@ -5,8 +5,15 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Fix GPG keys and install system dependencies
+RUN rm -f /etc/apt/sources.list.d/cuda*.list && \
+    apt-key del 7fa2af80 2>/dev/null || true && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    gnupg \
+    wget && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get update && apt-get install -y --no-install-recommends \
     python3.10 \
     python3-pip \
     python3-dev \
