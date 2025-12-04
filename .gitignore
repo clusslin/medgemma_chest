@@ -55,9 +55,6 @@ yarn-error.log*
 frontend/dist/
 frontend/build/
 
-# Docker
-.dockerignore
-
 # Database
 *.db
 *.sqlite
