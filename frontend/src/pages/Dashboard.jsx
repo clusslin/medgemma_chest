@@ -22,7 +22,8 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['study-stats'],
     queryFn: () => studiesAPI.getStats().then(res => res.data),
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 15000, // Refresh every 15 seconds (reduced from 5s to improve performance)
+    staleTime: 10000, // Consider data fresh for 10 seconds
   })
 
   if (isLoading) {
@@ -130,7 +131,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
             <ClockIcon className="h-4 w-4 mr-1" />
-            Auto-refreshing every 5 seconds
+            Auto-refreshing every 15 seconds
           </div>
         </div>
       </div>
