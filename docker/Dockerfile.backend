@@ -34,7 +34,7 @@ RUN pip3 install --no-cache-dir --upgrade pip && \
 
 # Copy application code
 COPY backend ./backend
-COPY .env .env
+COPY scripts ./scripts
 
 # Create data directories
 RUN mkdir -p /app/data/dicom_storage /app/data/logs /app/data/results /app/models

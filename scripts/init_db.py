@@ -48,19 +48,15 @@ def create_default_prompts():
     try:
         # Check if default prompt exists
         default_prompt = db.query(PromptTemplate).filter(
-            PromptTemplate.is_default == True,
-            PromptTemplate.template_type == 'system'
+            PromptTemplate.is_default == True
         ).first()
 
         if not default_prompt:
             # Create default system prompt
-            default_prompt = PromptTemplate(
-                name='Default Chest X-Ray Analysis',
-                description='Default prompt template for chest X-ray analysis',
-                template_type='system',
-                prompt_text="""You are an expert radiologist analyzing a chest X-ray image.
+            system_prompt = """You are an expert radiologist analyzing a chest X-ray image.
+Provide a detailed and accurate analysis based on the clinical findings."""
 
-Patient Information:
+            user_prompt_template = """Patient Information:
 - Age: {patient_age} years
 - Sex: {patient_sex}
 - Study Description: {study_description}
@@ -83,20 +79,18 @@ Please provide a detailed analysis including:
    - CRITICAL: Significant abnormalities requiring urgent attention
    - EMERGENCY: Life-threatening findings requiring immediate intervention
 
-Please structure your response clearly with these three sections.""",
-                variables={
-                    "variables": ["patient_age", "patient_sex", "study_description"]
-                },
-                output_structure={
-                    "structure": {
-                        "findings": ["heart", "lungs", "mediastinum", "pleura", "bones", "abnormalities"],
-                        "impression": ["summary", "clinical_significance"],
-                        "classification": ["category", "confidence"]
-                    }
-                },
-                display_order=0,
+Please structure your response clearly with these three sections."""
+
+            default_prompt = PromptTemplate(
+                name='Default Chest X-Ray Analysis',
+                description='Default prompt template for chest X-ray analysis using MedGemma',
+                system_prompt=system_prompt,
+                user_prompt_template=user_prompt_template,
+                temperature=0.7,
+                max_tokens=2048,
+                is_default=True,
                 is_active=True,
-                is_default=True
+                created_by='system'
             )
             db.add(default_prompt)
             logger.info("Created default prompt template")

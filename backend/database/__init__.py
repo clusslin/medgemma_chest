@@ -32,5 +32,6 @@ def init_db():
     """
     Initialize database tables
     """
-    from backend.models import dicom_node, study, prompt_template
+    # Import models to register them with Base
+    import backend.models
     Base.metadata.create_all(bind=engine)
