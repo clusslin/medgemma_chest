@@ -25,8 +25,6 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           // UI components chunk
           'ui-vendor': ['@headlessui/react', '@heroicons/react'],
-          // Chart libraries chunk
-          'chart-vendor': ['recharts'],
           // HTTP and state management chunk
           'http-vendor': ['axios', '@tanstack/react-query'],
         },
