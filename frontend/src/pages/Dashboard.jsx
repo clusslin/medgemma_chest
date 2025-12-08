@@ -19,13 +19,16 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function Dashboard() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, isFetching } = useQuery({
     queryKey: ['study-stats'],
     queryFn: () => studiesAPI.getStats().then(res => res.data),
-    refetchInterval: 15000, // Refresh every 15 seconds (reduced from 5s to improve performance)
-    staleTime: 10000, // Consider data fresh for 10 seconds
+    refetchInterval: 15000,
+    staleTime: 10000,
+    refetchOnWindowFocus: false, // Prevent refetch on tab switch
+    keepPreviousData: true, // Prevent flickering during refetch
   })
 
+  // Only show loading on initial load, not on background refetch
   if (isLoading) {
     return <Loading />
   }
@@ -129,10 +132,12 @@ export default function Dashboard() {
               Real-time overview of your chest X-ray analysis system
             </p>
           </div>
-          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-            <ClockIcon className="h-4 w-4 mr-1" />
-            Auto-refreshing every 15 seconds
-          </div>
+          {isFetching && (
+            <div className="flex items-center text-sm text-gray-400 dark:text-gray-500">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+              Updating...
+            </div>
+          )}
         </div>
       </div>
 

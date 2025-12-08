@@ -20,7 +20,8 @@ export default function ResultList() {
       status: 'completed',
       classification: classificationFilter || undefined,
     }).then(res => res.data),
-    refetchInterval: 5000,
+    refetchOnWindowFocus: false, // Results don't change frequently
+    keepPreviousData: true, // Prevent flickering when changing pages
   })
 
   const getClassificationBadge = (classification) => {
