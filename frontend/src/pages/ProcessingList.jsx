@@ -11,14 +11,22 @@ export default function ProcessingList() {
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['studies', page, statusFilter],
     queryFn: () => studiesAPI.getAll({
       page,
       page_size: 20,
       status: statusFilter || undefined,
     }).then(res => res.data),
-    refetchInterval: 3000, // Refresh every 3 seconds
+    refetchInterval: (data) => {
+      // Only auto-refresh if there are processing/received items
+      const hasActiveItems = data?.items?.some(item =>
+        ['received', 'processing', 'queued'].includes(item.status)
+      )
+      return hasActiveItems ? 5000 : false // 5 seconds if active, otherwise manual refresh
+    },
+    refetchOnWindowFocus: false,
+    keepPreviousData: true, // Prevent flickering
   })
 
   const getStatusBadge = (status) => {

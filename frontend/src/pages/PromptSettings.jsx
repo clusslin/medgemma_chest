@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { promptsAPI } from '../services/api'
 import { useToast } from '../contexts/ToastContext'
 import { PlusIcon, PencilIcon, TrashIcon, StarIcon } from '@heroicons/react/24/outline'
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
+import { StarIcon as StarIconSolid, DocumentTextIcon } from '@heroicons/react/24/solid'
 
 export default function PromptSettings() {
   const queryClient = useQueryClient()
@@ -13,9 +13,10 @@ export default function PromptSettings() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    template_type: 'system',
-    prompt_text: '',
-    display_order: 0,
+    system_prompt: '',
+    user_prompt_template: '',
+    temperature: 0.7,
+    max_tokens: 2048,
     is_active: true,
     is_default: false,
   })
@@ -77,7 +78,8 @@ export default function PromptSettings() {
     e.preventDefault()
     const data = {
       ...formData,
-      display_order: parseInt(formData.display_order),
+      temperature: parseFloat(formData.temperature),
+      max_tokens: parseInt(formData.max_tokens),
     }
 
     if (editingPrompt) {
@@ -92,9 +94,10 @@ export default function PromptSettings() {
     setFormData({
       name: prompt.name,
       description: prompt.description || '',
-      template_type: prompt.template_type,
-      prompt_text: prompt.prompt_text,
-      display_order: prompt.display_order,
+      system_prompt: prompt.system_prompt,
+      user_prompt_template: prompt.user_prompt_template,
+      temperature: prompt.temperature,
+      max_tokens: prompt.max_tokens,
       is_active: prompt.is_active,
       is_default: prompt.is_default,
     })
@@ -116,22 +119,13 @@ export default function PromptSettings() {
     setFormData({
       name: '',
       description: '',
-      template_type: 'system',
-      prompt_text: '',
-      display_order: 0,
+      system_prompt: '',
+      user_prompt_template: '',
+      temperature: 0.7,
+      max_tokens: 2048,
       is_active: true,
       is_default: false,
     })
-  }
-
-  const getTypeBadge = (type) => {
-    const colors = {
-      system: 'bg-blue-100 text-blue-800',
-      findings: 'bg-green-100 text-green-800',
-      impression: 'bg-purple-100 text-purple-800',
-      classification: 'bg-orange-100 text-orange-800',
-    }
-    return colors[type] || 'bg-gray-100 text-gray-800'
   }
 
   if (isLoading) {
@@ -172,9 +166,6 @@ export default function PromptSettings() {
               <div className="flex-1">
                 <div className="flex items-center flex-wrap gap-2 mb-3">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{prompt.name}</h3>
-                  <span className={`badge ${getTypeBadge(prompt.template_type)}`}>
-                    {prompt.template_type}
-                  </span>
                   {prompt.is_default && (
                     <span className="flex items-center text-yellow-600 dark:text-yellow-500 text-sm font-medium">
                       <StarIconSolid className="h-4 w-4 mr-1" />
@@ -184,23 +175,44 @@ export default function PromptSettings() {
                   <span className={`badge ${prompt.is_active ? 'badge-completed' : 'badge-failed'}`}>
                     {prompt.is_active ? 'Active' : 'Inactive'}
                   </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    T: {prompt.temperature} | Max: {prompt.max_tokens}
+                  </span>
                 </div>
 
                 {prompt.description && (
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{prompt.description}</p>
                 )}
 
-                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                      Prompt Template
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {prompt.prompt_text.length} characters
-                    </span>
+                <div className="space-y-3">
+                  {/* System Prompt */}
+                  <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        System Prompt
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {prompt.system_prompt.length} characters
+                      </span>
+                    </div>
+                    <div className="text-sm font-mono text-gray-700 dark:text-gray-300 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                      {prompt.system_prompt}
+                    </div>
                   </div>
-                  <div className="text-sm font-mono text-gray-700 dark:text-gray-300 max-h-32 overflow-y-auto whitespace-pre-wrap">
-                    {prompt.prompt_text}
+
+                  {/* User Prompt Template */}
+                  <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        User Prompt Template
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {prompt.user_prompt_template.length} characters
+                      </span>
+                    </div>
+                    <div className="text-sm font-mono text-gray-700 dark:text-gray-300 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                      {prompt.user_prompt_template}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -260,7 +272,7 @@ export default function PromptSettings() {
       {/* Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto animate-slideUp">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto animate-slideUp">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
               {editingPrompt ? 'Edit Prompt Template' : 'Add Prompt Template'}
             </h2>
@@ -268,7 +280,7 @@ export default function PromptSettings() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Name
                   </label>
                   <input
@@ -281,7 +293,7 @@ export default function PromptSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Description
                   </label>
                   <textarea
@@ -293,53 +305,87 @@ export default function PromptSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Template Type
-                  </label>
-                  <select
-                    className="input"
-                    value={formData.template_type}
-                    onChange={(e) => setFormData({ ...formData, template_type: e.target.value })}
-                  >
-                    <option value="system">System</option>
-                    <option value="findings">Findings</option>
-                    <option value="impression">Impression</option>
-                    <option value="classification">Classification</option>
-                  </select>
-                </div>
-
-                <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="label">
-                      Prompt Text
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      System Prompt
                     </label>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {formData.prompt_text.length} characters
+                      {formData.system_prompt.length} characters
                     </span>
                   </div>
                   <textarea
                     className="input font-mono text-sm"
-                    rows="10"
-                    value={formData.prompt_text}
-                    onChange={(e) => setFormData({ ...formData, prompt_text: e.target.value })}
+                    rows="6"
+                    value={formData.system_prompt}
+                    onChange={(e) => setFormData({ ...formData, system_prompt: e.target.value })}
                     required
-                    placeholder="Enter your prompt template here..."
+                    placeholder="Enter the system prompt that defines the AI's role and behavior..."
                   />
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
-                    <span className="font-medium">Available variables:</span> {'{patient_age}'}, {'{patient_sex}'}, {'{study_description}'}, {'{patient_name}'}, {'{patient_id}'}
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    The system prompt defines the AI's role, expertise, and behavior context.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Display Order
-                  </label>
-                  <input
-                    type="number"
-                    className="input"
-                    value={formData.display_order}
-                    onChange={(e) => setFormData({ ...formData, display_order: e.target.value })}
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      User Prompt Template
+                    </label>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {formData.user_prompt_template.length} characters
+                    </span>
+                  </div>
+                  <textarea
+                    className="input font-mono text-sm"
+                    rows="6"
+                    value={formData.user_prompt_template}
+                    onChange={(e) => setFormData({ ...formData, user_prompt_template: e.target.value })}
+                    required
+                    placeholder="Enter the user prompt template with variable placeholders..."
                   />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
+                    <span className="font-medium">Available variables:</span> {'{patient_age}'}, {'{patient_sex}'}, {'{study_description}'}, {'{patient_name}'}, {'{patient_id}'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Temperature
+                    </label>
+                    <input
+                      type="number"
+                      className="input"
+                      min="0"
+                      max="2"
+                      step="0.1"
+                      value={formData.temperature}
+                      onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Controls randomness (0-2). Lower is more focused.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Max Tokens
+                    </label>
+                    <input
+                      type="number"
+                      className="input"
+                      min="1"
+                      max="8192"
+                      step="1"
+                      value={formData.max_tokens}
+                      onChange={(e) => setFormData({ ...formData, max_tokens: e.target.value })}
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Maximum response length (1-8192 tokens).
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-4">
@@ -351,7 +397,7 @@ export default function PromptSettings() {
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                       Active
                     </label>
                   </div>
@@ -364,7 +410,7 @@ export default function PromptSettings() {
                       onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="is_default" className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="is_default" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                       Set as Default
                     </label>
                   </div>

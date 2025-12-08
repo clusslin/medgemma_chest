@@ -244,7 +244,7 @@ docker compose logs -f worker_dicom
 
 系統啟動後，可以在 Windows 瀏覽器中訪問：
 
-- **主要 Web 介面**: http://localhost:8081
+- **主要 Web 介面**: http://localhost:8080
 - **Frontend**: http://localhost:3000
 - **Backend API 文檔**: http://localhost:8000/docs
 - **RabbitMQ 管理介面**: http://localhost:15672
@@ -289,7 +289,7 @@ wsl --shutdown
 1. 開啟 "Windows Defender 防火牆"
 2. 點擊 "進階設定"
 3. 選擇 "輸入規則" > "新增規則"
-4. 選擇 "連接埠"，輸入需要開放的端口（例如：8081, 8000, 3000）
+4. 選擇 "連接埠"，輸入需要開放的端口（例如：8080, 8000, 3000）
 5. 允許連線
 
 ## GPU 性能驗證
