@@ -12,6 +12,7 @@ from backend.database import Base
 class StudyStatus(str, enum.Enum):
     """Study processing status"""
     RECEIVED = "received"
+    QUEUED = "queued"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
