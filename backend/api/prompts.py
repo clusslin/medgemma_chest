@@ -17,23 +17,22 @@ router = APIRouter(prefix="/prompts", tags=["Prompt Templates"])
 class PromptTemplateCreate(BaseModel):
     name: str
     description: str = None
-    template_type: str  # system, findings, impression, classification
-    prompt_text: str
-    variables: dict = None
-    output_structure: dict = None
-    display_order: int = 0
+    system_prompt: str
+    user_prompt_template: str
+    temperature: float = 0.7
+    max_tokens: int = 2048
     is_active: bool = True
     is_default: bool = False
+    created_by: str = None
 
 
 class PromptTemplateUpdate(BaseModel):
     name: str = None
     description: str = None
-    template_type: str = None
-    prompt_text: str = None
-    variables: dict = None
-    output_structure: dict = None
-    display_order: int = None
+    system_prompt: str = None
+    user_prompt_template: str = None
+    temperature: float = None
+    max_tokens: int = None
     is_active: bool = None
     is_default: bool = None
 
@@ -42,13 +41,13 @@ class PromptTemplateResponse(BaseModel):
     id: int
     name: str
     description: str = None
-    template_type: str
-    prompt_text: str
-    variables: dict = None
-    output_structure: dict = None
-    display_order: int
+    system_prompt: str
+    user_prompt_template: str
+    temperature: float
+    max_tokens: int
     is_active: bool
     is_default: bool
+    created_by: str = None
     created_at: str = None
     updated_at: str = None
 
@@ -58,7 +57,6 @@ class PromptTemplateResponse(BaseModel):
 
 @router.get("/", response_model=List[PromptTemplateResponse])
 def get_prompt_templates(
-    template_type: Optional[str] = None,
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
@@ -67,13 +65,10 @@ def get_prompt_templates(
     """
     query = db.query(PromptTemplate)
 
-    if template_type:
-        query = query.filter(PromptTemplate.template_type == template_type)
-
     if is_active is not None:
         query = query.filter(PromptTemplate.is_active == is_active)
 
-    templates = query.order_by(PromptTemplate.display_order).all()
+    templates = query.order_by(PromptTemplate.id).all()
     return templates
 
 
@@ -115,7 +110,6 @@ def create_prompt_template(
         # If setting as default, unset other defaults
         if template_data.is_default:
             db.query(PromptTemplate).filter(
-                PromptTemplate.template_type == template_data.template_type,
                 PromptTemplate.is_default == True
             ).update({"is_default": False})
 
@@ -156,7 +150,6 @@ def update_prompt_template(
         # If setting as default, unset other defaults
         if template_data.is_default:
             db.query(PromptTemplate).filter(
-                PromptTemplate.template_type == template.template_type,
                 PromptTemplate.is_default == True,
                 PromptTemplate.id != template_id
             ).update({"is_default": False})
@@ -220,9 +213,8 @@ def set_default_template(template_id: int, db: Session = Depends(get_db)):
         if not template:
             raise HTTPException(status_code=404, detail="Prompt template not found")
 
-        # Unset other defaults of same type
+        # Unset other defaults
         db.query(PromptTemplate).filter(
-            PromptTemplate.template_type == template.template_type,
             PromptTemplate.is_default == True
         ).update({"is_default": False})
 
