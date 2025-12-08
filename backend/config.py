@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     MODEL_DEVICE: str = "cuda"
     MODEL_LOAD_IN_8BIT: bool = True
     MODEL_MAX_LENGTH: int = 2048
+    HF_TOKEN: str = ""  # HuggingFace token for accessing gated models
 
     # RabbitMQ Settings
     RABBITMQ_HOST: str = "rabbitmq"
