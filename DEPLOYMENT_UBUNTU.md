@@ -229,7 +229,7 @@ docker compose logs -f worker_dicom
 
 系統啟動後，可以通過以下地址訪問：
 
-- **主要 Web 介面**: http://your-server-ip:8081
+- **主要 Web 介面**: http://your-server-ip:8080
 - **Frontend**: http://your-server-ip:3000
 - **Backend API 文檔**: http://your-server-ip:8000/docs
 - **RabbitMQ 管理介面**: http://your-server-ip:15672
@@ -381,7 +381,7 @@ find ./data/dicom_storage -mtime +30 -type f -delete
 1. **修改預設密碼**: 務必在 `.env` 中設定強密碼
 2. **防火牆設定**:
    ```bash
-   sudo ufw allow 8081/tcp  # Web UI
+   sudo ufw allow 8080/tcp  # Web UI
    sudo ufw allow 11112/tcp  # DICOM SCP
    sudo ufw enable
    ```
