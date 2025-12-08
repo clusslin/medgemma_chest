@@ -52,9 +52,15 @@ export default function Dashboard() {
     placeholderData: keepPreviousData, // Keep previous data while fetching new data
   })
 
-  // Only show loading on initial load, not on background refetch
-  if (isLoading) {
+  // Only show loading on initial load when there's no data yet
+  // If we have data (even old data), show it while fetching new data
+  if (isLoading && !stats) {
     return <Loading />
+  }
+
+  // If no data at all, don't render anything
+  if (!stats) {
+    return null
   }
 
   const statusCards = [
