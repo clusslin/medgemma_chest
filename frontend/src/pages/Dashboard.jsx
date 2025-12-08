@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { studiesAPI } from '../services/api'
 import Loading from '../components/Loading'
 import StatCard from '../components/StatCard'
@@ -18,14 +19,37 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline'
 
+// Animated number component for smooth value transitions
+function AnimatedNumber({ value, className = '' }) {
+  const [displayValue, setDisplayValue] = useState(value)
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  useEffect(() => {
+    if (displayValue !== value) {
+      setIsUpdating(true)
+      const timer = setTimeout(() => {
+        setDisplayValue(value)
+        setTimeout(() => setIsUpdating(false), 300)
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [value, displayValue])
+
+  return (
+    <span className={`${className} transition-all duration-300 ${isUpdating ? 'scale-105' : ''}`}>
+      {displayValue}
+    </span>
+  )
+}
+
 export default function Dashboard() {
   const { data: stats, isLoading, isFetching } = useQuery({
     queryKey: ['study-stats'],
     queryFn: () => studiesAPI.getStats().then(res => res.data),
     refetchInterval: 15000,
     staleTime: 10000,
-    refetchOnWindowFocus: false, // Prevent refetch on tab switch
-    keepPreviousData: true, // Prevent flickering during refetch
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData, // Keep previous data while fetching new data
   })
 
   // Only show loading on initial load, not on background refetch
@@ -149,13 +173,13 @@ export default function Dashboard() {
               Success Rate
             </p>
             <p className="mt-2 text-4xl font-bold text-primary-600 dark:text-primary-400">
-              {completionRate}%
+              <AnimatedNumber value={completionRate} />%
             </p>
             <div className="mt-3">
               <ProgressBar value={parseFloat(completionRate)} max={100} color="primary" />
             </div>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              {stats?.completed || 0} of {totalProcessed} processed successfully
+              <AnimatedNumber value={stats?.completed || 0} /> of <AnimatedNumber value={totalProcessed} /> processed successfully
             </p>
           </div>
         </div>
@@ -166,7 +190,7 @@ export default function Dashboard() {
               Normal Cases
             </p>
             <p className="mt-2 text-4xl font-bold text-green-600 dark:text-green-400">
-              {stats?.normal || 0}
+              <AnimatedNumber value={stats?.normal || 0} />
             </p>
             <div className="mt-3">
               <ProgressBar
@@ -187,7 +211,7 @@ export default function Dashboard() {
               Urgent Cases
             </p>
             <p className="mt-2 text-4xl font-bold text-red-600 dark:text-red-400">
-              {(stats?.critical || 0) + (stats?.emergency || 0)}
+              <AnimatedNumber value={(stats?.critical || 0) + (stats?.emergency || 0)} />
             </p>
             <div className="mt-3">
               <ProgressBar
@@ -231,7 +255,9 @@ export default function Dashboard() {
                   <div className={`w-3 h-3 rounded-full ${item.color} mr-2`}></div>
                   <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
                 </div>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{item.value}</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  <AnimatedNumber value={item.value} />
+                </span>
               </div>
             ))}
           </div>
@@ -266,7 +292,9 @@ export default function Dashboard() {
                   <div className={`w-3 h-3 rounded-full ${item.color} mr-2`}></div>
                   <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
                 </div>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{item.value}</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  <AnimatedNumber value={item.value} />
+                </span>
               </div>
             ))}
           </div>
@@ -277,19 +305,27 @@ export default function Dashboard() {
       <div className="card bg-gray-50 dark:bg-gray-900/50">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats?.total_studies || 0}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <AnimatedNumber value={stats?.total_studies || 0} />
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Total</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats?.processing || 0}</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              <AnimatedNumber value={stats?.processing || 0} />
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Active</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats?.completed || 0}</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <AnimatedNumber value={stats?.completed || 0} />
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Done</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats?.failed || 0}</p>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+              <AnimatedNumber value={stats?.failed || 0} />
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Failed</p>
           </div>
         </div>
