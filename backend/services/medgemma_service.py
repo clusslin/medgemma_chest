@@ -76,6 +76,20 @@ class MedGemmaService:
         logger.warning("GPU has no bfloat16 support (e.g. RTX 20 series); falling back to float16")
         return torch.float16
 
+    def _max_memory(self) -> Optional[Dict[Any, str]]:
+        """Per-GPU budget so device_map="auto" spreads layers across all cards."""
+        if self.device != "cuda" or not torch.cuda.is_available():
+            return None
+        budget = {}
+        for i in range(torch.cuda.device_count()):
+            props = torch.cuda.get_device_properties(i)
+            total_gb = props.total_memory / 1024**3
+            usable = max(1.0, total_gb - settings.MODEL_GPU_RESERVE_GB)
+            budget[i] = f"{usable:.1f}GiB"
+            logger.info(f"GPU {i}: {props.name}, {total_gb:.1f} GiB total, {usable:.1f} GiB for weights")
+        budget["cpu"] = "48GiB"
+        return budget
+
     def load_model(self):
         """
         Load MedGemma model and processor
@@ -113,12 +127,21 @@ class MedGemmaService:
                 token=token,
                 quantization_config=quantization_config,
                 device_map="auto" if self.device == "cuda" else None,
+                max_memory=self._max_memory(),
                 torch_dtype=dtype,
             )
             self.model.eval()
 
             if self.device == "cuda" and torch.cuda.is_available():
-                logger.info(f"Model loaded on GPU: {torch.cuda.get_device_name(0)}")
+                placement = getattr(self.model, "hf_device_map", {}) or {}
+                devices = sorted({str(d) for d in placement.values()})
+                logger.info(f"Model layers placed on devices: {devices}")
+                if "cpu" in devices or "disk" in devices:
+                    logger.warning("Part of the model was offloaded to CPU; inference will be very slow. "
+                                   "Enable MODEL_LOAD_IN_4BIT or use a smaller model.")
+                for i in range(torch.cuda.device_count()):
+                    used = torch.cuda.memory_allocated(i) / 1024**3
+                    logger.info(f"GPU {i} memory allocated after load: {used:.1f} GiB")
             else:
                 logger.info("Model loaded on CPU")
 

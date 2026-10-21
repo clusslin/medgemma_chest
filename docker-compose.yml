@@ -106,6 +106,10 @@ services:
     command: python -m backend.services.processing_worker
     env_file:
       - .env
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True
+    shm_size: "8gb"
     volumes:
       - ./data:/app/data
       - ./models:/app/models
@@ -115,6 +119,14 @@ services:
       - postgres
       - rabbitmq
     restart: unless-stopped
+    # One model instance split across all GPUs (requires nvidia-container-toolkit)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   # Processing Worker (Report)
   worker_report:

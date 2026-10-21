@@ -25,8 +25,11 @@ class Settings(BaseSettings):
     MODEL_NAME: str = "google/medgemma-27b-it"
     MODEL_CACHE_DIR: str = "/app/models"
     MODEL_DEVICE: str = "cuda"
-    MODEL_LOAD_IN_8BIT: bool = True
-    MODEL_LOAD_IN_4BIT: bool = False  # Use on 24GB GPUs (RTX 3090/4090); overrides 8-bit
+    # 27B needs ~18GB in 4-bit, ~30GB+ in 8-bit; 4-bit overrides 8-bit
+    MODEL_LOAD_IN_8BIT: bool = False
+    MODEL_LOAD_IN_4BIT: bool = True
+    # VRAM left free on each GPU for activations / KV cache when splitting the model
+    MODEL_GPU_RESERVE_GB: float = 2.5
     MODEL_MAX_LENGTH: int = 2048
     MODEL_MAX_NEW_TOKENS: int = 1024  # Hard cap on report length
     MODEL_TEMPERATURE: float = 0.0  # 0 = deterministic (greedy) decoding

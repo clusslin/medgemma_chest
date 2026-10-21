@@ -169,11 +169,15 @@ MIN_AGE=20
 # ============================================
 MODEL_NAME=google/medgemma-27b-it
 MODEL_DEVICE=cuda
-MODEL_LOAD_IN_8BIT=true
+# 雙 A4000 合計 32GB：27B 必須用 4-bit（約 18GB）
+# 8-bit 需 30GB 以上，扣掉兩張卡的 CUDA context 後會 OOM
+MODEL_LOAD_IN_8BIT=false
+MODEL_LOAD_IN_4BIT=true
+MODEL_GPU_RESERVE_GB=2.5
 MODEL_MAX_LENGTH=2048
-
-# GPU 記憶體設定
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+MODEL_MAX_NEW_TOKENS=1024
+MODEL_TEMPERATURE=0.0
+HF_TOKEN=你的HuggingFace_Token
 
 # ============================================
 # RabbitMQ 設定
@@ -215,82 +219,32 @@ SSH_KEY_PATH=/app/.ssh/id_rsa
 FTP_ENABLED=false
 ```
 
-### 3. Docker Compose 設定（雙 GPU 優化）
+### 3. Docker Compose 設定（雙 GPU）
 
-建立或修改 `docker-compose.override.yml`：
-
-```yaml
-version: '3.8'
-
-services:
-  # Worker 1 - 使用 GPU 0
-  worker_dicom_gpu0:
-    extends:
-      service: worker_dicom
-    environment:
-      - CUDA_VISIBLE_DEVICES=0
-      - WORKER_NAME=worker_dicom_gpu0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['0']
-              capabilities: [gpu]
-
-  # Worker 2 - 使用 GPU 1
-  worker_dicom_gpu1:
-    extends:
-      service: worker_dicom
-    environment:
-      - CUDA_VISIBLE_DEVICES=1
-      - WORKER_NAME=worker_dicom_gpu1
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['1']
-              capabilities: [gpu]
-
-  # Report Worker（不需要 GPU）
-  worker_report:
-    environment:
-      - WORKER_CONCURRENCY=4
-```
-
-**或者直接修改主要的 `docker-compose.yml`**，將 `worker_dicom` 服務改為：
+**不需要 override 檔**。主要的 `docker-compose.yml` 已將 `worker_dicom` 設定為使用全部 GPU：
 
 ```yaml
   worker_dicom:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: celery -A app.celery_app worker --loglevel=info -Q dicom_queue --concurrency=1
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - RABBITMQ_HOST=${RABBITMQ_HOST}
-      - REDIS_HOST=${REDIS_HOST}
-      - MODEL_NAME=${MODEL_NAME}
-      - MODEL_DEVICE=cuda
-      - MODEL_LOAD_IN_8BIT=true
-    volumes:
-      - ./backend:/app
-      - ./data:/data
-    depends_on:
-      - postgres
-      - rabbitmq
-      - redis
-    networks:
-      - medgemma_network
+    ...
     deploy:
-      replicas: 2  # 啟動兩個 workers
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: 2
+              count: all
               capabilities: [gpu]
+```
+
+運作方式：**一份** MedGemma 27B（4-bit）透過 `device_map="auto"` 被切成兩半，
+前半段層放 GPU 0、後半段放 GPU 1，每張卡約使用 9–11GB。
+
+> ⚠️ 不要在每張卡各跑一個 worker：單張 16GB 放不下 27B（4-bit 也要約 18GB）。
+> `worker_report` 不載入模型、不需要 GPU。
+
+前置條件：主機需安裝 `nvidia-container-toolkit`，並確認容器能看到兩張卡：
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
 ```
 
 ### 4. 啟動系統
@@ -610,9 +564,9 @@ crontab -e
 **解決方案**：
 
 ```bash
-# 確認 8-bit 量化已啟用
-grep MODEL_LOAD_IN_8BIT .env
-# 應該顯示: MODEL_LOAD_IN_8BIT=true
+# 確認 4-bit 量化已啟用（雙 A4000 不能用 8-bit）
+grep MODEL_LOAD_IN .env
+# 應該顯示: MODEL_LOAD_IN_4BIT=true 與 MODEL_LOAD_IN_8BIT=false
 
 # 調整 PyTorch 記憶體配置
 echo "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256" >> .env
@@ -659,7 +613,7 @@ WORKER_CONCURRENCY=2
 - **並行處理能力**：2-4 張影像同時處理
 - **每日處理容量**：2000-4000 張影像
 - **GPU 利用率**：60-80%
-- **GPU 記憶體使用**：每個 GPU 約 12-14GB
+- **GPU 記憶體使用**：每個 GPU 約 9-12GB（一份 4-bit 模型分散在兩張卡）
 
 ---
 

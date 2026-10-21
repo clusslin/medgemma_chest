@@ -19,10 +19,17 @@ class ProcessingWorker:
     """
 
     def __init__(self):
-        self.medgemma_service = MedGemmaService()
+        self._medgemma_service = None
         self.sr_generator = DicomSRGenerator()
         self.mq_service = MessageQueueService()
         self.file_transfer_service = FileTransferService()
+
+    @property
+    def medgemma_service(self) -> MedGemmaService:
+        # Loaded lazily so the report worker never loads the model onto the GPUs
+        if self._medgemma_service is None:
+            self._medgemma_service = MedGemmaService()
+        return self._medgemma_service
 
     def process_dicom(self, message: dict):
         """
@@ -202,5 +209,6 @@ if __name__ == "__main__":
         # Start report consumer
         worker.start_report_consumer()
     else:
-        # Start DICOM consumer (default)
+        # Load the model before consuming so the first study doesn't wait for it
+        worker.medgemma_service
         worker.start_dicom_consumer()
