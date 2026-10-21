@@ -18,28 +18,28 @@ router = APIRouter(prefix="/studies", tags=["Studies"])
 class StudyResponse(BaseModel):
     id: int
     study_instance_uid: str
-    series_instance_uid: str = None
-    sop_instance_uid: str = None
-    accession_number: str = None
-    patient_id: str = None
-    patient_name: str = None
-    patient_age: int = None
-    patient_sex: str = None
-    patient_birth_date: str = None
-    study_date: str = None
-    study_time: str = None
-    study_description: str = None
-    modality: str = None
+    series_instance_uid: Optional[str] = None
+    sop_instance_uid: Optional[str] = None
+    accession_number: Optional[str] = None
+    patient_id: Optional[str] = None
+    patient_name: Optional[str] = None
+    patient_age: Optional[int] = None
+    patient_sex: Optional[str] = None
+    patient_birth_date: Optional[str] = None
+    study_date: Optional[str] = None
+    study_time: Optional[str] = None
+    study_description: Optional[str] = None
+    modality: Optional[str] = None
     status: str
-    classification: str = None
-    confidence_score: float = None
-    findings: str = None
-    impression: str = None
-    report_json: dict = None
-    error_message: str = None
-    received_at: str = None
-    processed_at: str = None
-    sent_at: str = None
+    classification: Optional[str] = None
+    confidence_score: Optional[float] = None
+    findings: Optional[str] = None
+    impression: Optional[str] = None
+    report_json: Optional[dict] = None
+    error_message: Optional[str] = None
+    created_at: Optional[datetime] = None
+    processed_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -99,7 +99,7 @@ def get_studies(
 
     # Apply pagination
     offset = (page - 1) * page_size
-    studies = query.order_by(Study.received_at.desc()).offset(offset).limit(page_size).all()
+    studies = query.order_by(Study.created_at.desc()).offset(offset).limit(page_size).all()
 
     return {
         "total": total,

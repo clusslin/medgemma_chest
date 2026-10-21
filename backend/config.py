@@ -26,7 +26,11 @@ class Settings(BaseSettings):
     MODEL_CACHE_DIR: str = "/app/models"
     MODEL_DEVICE: str = "cuda"
     MODEL_LOAD_IN_8BIT: bool = True
+    MODEL_LOAD_IN_4BIT: bool = False  # Use on 24GB GPUs (RTX 3090/4090); overrides 8-bit
     MODEL_MAX_LENGTH: int = 2048
+    MODEL_MAX_NEW_TOKENS: int = 1024  # Hard cap on report length
+    MODEL_TEMPERATURE: float = 0.0  # 0 = deterministic (greedy) decoding
+    MODEL_REPETITION_PENALTY: float = 1.1
     HF_TOKEN: str = ""  # HuggingFace token for accessing gated models
 
     # RabbitMQ Settings

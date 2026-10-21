@@ -79,15 +79,15 @@ Please provide a detailed analysis including:
    - CRITICAL: Significant abnormalities requiring urgent attention
    - EMERGENCY: Life-threatening findings requiring immediate intervention
 
-Please structure your response clearly with these three sections."""
+Use exactly these three section headers, each only once. Answer CLASSIFICATION with a single word."""
 
             default_prompt = PromptTemplate(
                 name='Default Chest X-Ray Analysis',
                 description='Default prompt template for chest X-ray analysis using MedGemma',
                 system_prompt=system_prompt,
                 user_prompt_template=user_prompt_template,
-                temperature=0.7,
-                max_tokens=2048,
+                temperature=0.0,
+                max_tokens=1024,
                 is_default=True,
                 is_active=True,
                 created_by='system'

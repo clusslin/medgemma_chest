@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { studiesAPI } from '../services/api'
 import Loading from '../components/Loading'
 import EmptyState from '../components/EmptyState'
@@ -18,15 +18,15 @@ export default function ProcessingList() {
       page_size: 20,
       status: statusFilter || undefined,
     }).then(res => res.data),
-    refetchInterval: (data) => {
-      // Only auto-refresh if there are processing/received items
-      const hasActiveItems = data?.items?.some(item =>
+    refetchInterval: (query) => {
+      // Only auto-refresh while some studies are still being processed
+      const hasActiveItems = query.state.data?.studies?.some(item =>
         ['received', 'processing', 'queued'].includes(item.status)
       )
       return hasActiveItems ? 5000 : false // 5 seconds if active, otherwise manual refresh
     },
     refetchOnWindowFocus: false,
-    keepPreviousData: true, // Prevent flickering
+    placeholderData: keepPreviousData, // Prevent flickering
   })
 
   const getStatusBadge = (status) => {
@@ -142,7 +142,7 @@ export default function ProcessingList() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {study.received_at ? dayjs(study.received_at).format('YYYY-MM-DD HH:mm:ss') : '-'}
+                      {study.created_at ? dayjs(study.created_at).format('YYYY-MM-DD HH:mm:ss') : '-'}
                     </td>
                   </tr>
                 ))}

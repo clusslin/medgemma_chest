@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { studiesAPI } from '../services/api'
 import Loading from '../components/Loading'
 import EmptyState from '../components/EmptyState'
@@ -21,7 +21,7 @@ export default function ResultList() {
       classification: classificationFilter || undefined,
     }).then(res => res.data),
     refetchOnWindowFocus: false, // Results don't change frequently
-    keepPreviousData: true, // Prevent flickering when changing pages
+    placeholderData: keepPreviousData, // Prevent flickering when changing pages
   })
 
   const getClassificationBadge = (classification) => {

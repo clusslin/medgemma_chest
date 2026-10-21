@@ -114,7 +114,7 @@ class DicomSCPService:
                         dicom_file_path=str(file_path),
                         status=StudyStatus.RECEIVED,
                         source_ae_title=source_ae,
-                        source_ip=source_ip,
+                        source_ip_address=source_ip,
                     )
                     db.add(new_study)
                     logger.info(f"New study created in database: {study_uid}")

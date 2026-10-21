@@ -1,7 +1,7 @@
 """
 Database models for MedGemma Chest X-Ray System
 """
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Enum as SQLEnum, Float
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Enum as SQLEnum, Float, JSON
 from sqlalchemy.sql import func
 from datetime import datetime
 import enum
@@ -53,14 +53,18 @@ class Study(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     study_instance_uid = Column(String(128), unique=True, nullable=False, index=True)
+    series_instance_uid = Column(String(128), nullable=True)
+    sop_instance_uid = Column(String(128), nullable=True)
     patient_id = Column(String(64), nullable=True, index=True)
     patient_name = Column(String(255), nullable=True)
     patient_age = Column(Integer, nullable=True)
-    patient_sex = Column(String(1), nullable=True)
+    patient_sex = Column(String(16), nullable=True)
+    patient_birth_date = Column(String(8), nullable=True)
     study_date = Column(String(8), nullable=True)
-    study_time = Column(String(6), nullable=True)
+    study_time = Column(String(16), nullable=True)  # DICOM TM can be HHMMSS.FFFFFF
     study_description = Column(String(255), nullable=True)
     accession_number = Column(String(64), nullable=True, index=True)
+    modality = Column(String(16), nullable=True)
 
     # Processing information
     status = Column(SQLEnum(StudyStatus), default=StudyStatus.RECEIVED, nullable=False, index=True)
@@ -70,6 +74,7 @@ class Study(Base):
     # AI Analysis results
     findings = Column(Text, nullable=True)
     impression = Column(Text, nullable=True)
+    report_json = Column(JSON, nullable=True)
 
     # File paths
     dicom_file_path = Column(String(512), nullable=True)
@@ -83,6 +88,8 @@ class Study(Base):
     # Processing metadata
     processing_started_at = Column(DateTime(timezone=True), nullable=True)
     processing_completed_at = Column(DateTime(timezone=True), nullable=True)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
     error_message = Column(Text, nullable=True)
     retry_count = Column(Integer, default=0)
 

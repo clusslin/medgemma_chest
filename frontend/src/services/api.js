@@ -40,9 +40,9 @@ api.interceptors.response.use(
 
 // DICOM Nodes API
 export const dicomNodesAPI = {
-  getAll: (params) => api.get('/dicom-nodes', { params }),
+  getAll: (params) => api.get('/dicom-nodes/', { params }),
   getById: (id) => api.get(`/dicom-nodes/${id}`),
-  create: (data) => api.post('/dicom-nodes', data),
+  create: (data) => api.post('/dicom-nodes/', data),
   update: (id, data) => api.put(`/dicom-nodes/${id}`, data),
   delete: (id) => api.delete(`/dicom-nodes/${id}`),
   testConnection: (id) => api.post(`/dicom-nodes/${id}/test`),
@@ -50,7 +50,7 @@ export const dicomNodesAPI = {
 
 // Studies API
 export const studiesAPI = {
-  getAll: (params) => api.get('/studies', { params }),
+  getAll: (params) => api.get('/studies/', { params }),
   getById: (uid) => api.get(`/studies/${uid}`),
   getStats: () => api.get('/studies/stats'),
   delete: (uid) => api.delete(`/studies/${uid}`),
@@ -59,9 +59,9 @@ export const studiesAPI = {
 
 // Prompts API
 export const promptsAPI = {
-  getAll: (params) => api.get('/prompts', { params }),
+  getAll: (params) => api.get('/prompts/', { params }),
   getById: (id) => api.get(`/prompts/${id}`),
-  create: (data) => api.post('/prompts', data),
+  create: (data) => api.post('/prompts/', data),
   update: (id, data) => api.put(`/prompts/${id}`, data),
   delete: (id) => api.delete(`/prompts/${id}`),
   setDefault: (id) => api.post(`/prompts/${id}/set-default`),
